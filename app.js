@@ -8,6 +8,7 @@ const taskRouter = require('./routes/task');
 const logRouter = require('./routes/log');
 const acheRouter = require('./routes/ache');
 const wishRouter = require('./routes/wish');
+const userRouter = require('./routes/user');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/task", taskRouter);
 app.use("/log", logRouter);
 app.use("/ache", acheRouter);
 app.use("/wish", wishRouter);
+app.use("/user", userRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
