@@ -40,6 +40,7 @@ module.exports = {
       point = Number(point) - Number(params.point);
       if (point < 0) {
         rej("点数不足");
+        return
       }
     }
     let query = {
