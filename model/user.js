@@ -35,9 +35,9 @@ module.exports = {
     user = utils.underlineToCamelCase(user)[0];
     let point = user.point;
     if (params.calc === "add") {
-      point += params.point;
+      point = Number(point) + Number(params.point);
     } else {
-      point -= params.point;
+      point = Number(point) - Number(params.point);
       if (point < 0) {
         rej("点数不足");
       }

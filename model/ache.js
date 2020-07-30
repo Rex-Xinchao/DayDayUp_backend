@@ -1,4 +1,7 @@
 const db = require("./db");
+const utils = require("../lib/utils");
+const userModel = require("./user");
+// 获取list的total值
 const getTotalCount = (params) => {
   let sql = `SELECT COUNT(*) AS TOTAL FROM achievement where ${
     params.type === "all" ? "" : "type = ? and"
@@ -14,10 +17,10 @@ const getTotalCount = (params) => {
   };
   return db.row(query).then(
     (dbRes) => dbRes[0]["TOTAL"],
-    (err) => err
+    (err) => 0
   );
 };
-
+// 获取list已完成成就的total值
 const getFinishedCount = (params) => {
   let sql = `SELECT COUNT(*) AS TOTAL FROM achievement where ${
     params.type === "all" ? "" : "type = ? and"
@@ -33,7 +36,19 @@ const getFinishedCount = (params) => {
   };
   return db.row(query).then(
     (dbRes) => dbRes[0]["TOTAL"],
-    (err) => err
+    (err) => 0
+  );
+};
+// 根据id获取成就
+const getAche = (params) => {
+  let query = {
+    sql: "SELECT * FROM achievement where id = ?",
+    timeout: 4000,
+    values: [params.id],
+  };
+  return db.row(query).then(
+    (dbRes) => utils.underlineToCamelCase(dbRes)[0],
+    (err) => null
   );
 };
 
@@ -60,29 +75,44 @@ module.exports = {
       values: values,
     };
     db.row(query).then(
-      (dbRes) => res(dbRes, total, finished),
+      (dbRes) =>
+        res({
+          total: total,
+          finished: finished,
+          list: utils.underlineToCamelCase(dbRes),
+        }),
       (err) => rej(err)
     );
   },
-  getAcheById: (params, res, rej) => {
-    let query = {
-      sql: "SELECT * FROM achievement where id = ?",
-      timeout: 4000,
-      values: [params.id],
-    };
-    db.row(query).then(
-      (dbRes) => res(dbRes),
-      (err) => rej(err)
-    );
-  },
-  finish: (params, res, rej) => {
+  finish: async (params, res, rej) => {
+    const ache = await getAche(params);
+    if (!ache) {
+      rej("成就不存在");
+      return
+    } else if (ache.finished == 1) {
+      rej("成就不能重复完成");
+      return
+    }
+    ache.finished = '1'
     let query = {
       sql: "UPDATE achievement SET finished = '1' WHERE id = ?",
       timeout: 4000,
       values: [params.id],
     };
     db.row(query).then(
-      (dbRes) => res(dbRes),
+      (dbRes) => {
+        let userParams = {
+          ...ache,
+          calc: "add",
+          refresh: "ache",
+          openid: params.openid,
+        };
+        userModel.setPoint(
+          userParams,
+          (dbRes) => res(ache),
+          (err) => rej(err)
+        );
+      },
       (err) => rej(err)
     );
   },

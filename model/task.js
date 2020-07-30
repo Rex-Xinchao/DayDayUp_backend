@@ -28,8 +28,10 @@ module.exports = {
     const task = await getTask(params);
     if (!task) {
       rej("任务不存在");
+      return
     } else if (task.current === task.limit) {
       rej("任务已完成");
+      return
     }
     task.current = Number(params.current);
     let query = {
