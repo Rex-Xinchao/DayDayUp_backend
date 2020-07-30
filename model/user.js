@@ -1,5 +1,6 @@
 const db = require("./db");
 const utils = require("../lib/utils");
+const logModel = require("./log");
 const findUser = (params) => {
   let query = {
     sql: `SELECT * FROM user where id = ?`,
@@ -33,7 +34,7 @@ module.exports = {
     let user = await findUser(params);
     user = utils.underlineToCamelCase(user)[0];
     let point = user.point;
-    if (params.type === "increase") {
+    if (params.calc === "add") {
       point += params.point;
     } else {
       point -= params.point;
@@ -47,7 +48,13 @@ module.exports = {
       values: [point, params.openid],
     };
     db.row(query).then(
-      (dbRes) => res({ id: params.openid, point: 0 }),
+      (dbRes) => {
+        logModel.addLog(
+          params,
+          (dbRes) => res({ id: params.openid, point: 0 }),
+          (err) => rej(err)
+        );
+      },
       (err) => rej(err)
     );
   },
